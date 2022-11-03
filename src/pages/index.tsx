@@ -10,6 +10,7 @@ export default function Home(props) {
         props.list.map(x => {
           return (
             <div>
+              <h1 className="text-violet-500 font-bold text-4xl">NAME</h1>
               {x.name}
             </div>
           )
