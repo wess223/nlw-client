@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import { api } from '../lib/axios';
+import { FormEvent, useState } from 'react';
 
 import appPreViewImg from '../assets/app-nlw-copa-preview.png';
 import usersAvatarExampleImg from '../assets/users-avatar-example.png'
@@ -6,7 +8,39 @@ import iconCheckImg from '../assets/icon-check.svg';
 import logoImg from '../assets/logo.svg';
 
 
-export default function Home() {
+interface HomeProps {
+  poolCount: number;
+  guessCount: number;
+  userCount: number;
+}
+
+
+export default function Home(props: HomeProps) {
+
+  const [poolTitle, setPoolTitle] = useState('')
+
+  async function createPool(event: FormEvent) {
+    event.preventDefault();
+
+    try {
+      // const response = await api.post('/pools', {
+      //   title: poolTitle,
+      // });
+
+      // const { code } = response.data;
+      const code = 'SD56477'
+
+      //copia para área de transferência do usuário.
+      await navigator.clipboard.writeText(code)
+
+      alert('Bolão criado com sucesso, o código foi copiado para a área de transferência!')
+      setPoolTitle('')
+    } catch (err) {
+      console.log(err);
+      alert('Falha ao criar o bolão, tente novamente!')
+    }
+  }
+
   return (
     <div className='max-w-[1124px] h-screen gap-28 mx-auto grid grid-cols-2 items-center'>
       <main>
@@ -27,16 +61,18 @@ export default function Home() {
             alt=''
           />
           <strong className="text-gray-100 text-xl">
-            <span className="text-ignite-500">+12.592 </span>pessoas já estão usando.
+            <span className="text-ignite-500">+{props.userCount - 2} </span>pessoas já estão usando.
           </strong>
         </div>
 
-        <form className="mt-10 flex gap-2">
+        <form onSubmit={createPool} className="mt-10 flex gap-2">
           <input
-            className="flex-1 px-6 py-4 rounded bg-gray-800 border border-gray-600 text-sm"
+            className="flex-1 px-6 py-4 rounded bg-gray-800 border border-gray-600 text-sm text-gray-100"
             type={'text'}
             required
             placeholder='Qual nome do seu bolão?'
+            onChange={e => setPoolTitle(e.target.value)}
+            value={poolTitle}
           />
 
           <button
@@ -57,7 +93,7 @@ export default function Home() {
               alt=''
             />
             <div className="flex flex-col">
-              <span className="font-bold text-2xl">+2.034 </span>
+              <span className="font-bold text-2xl">+{props.poolCount + 100} </span>
               <span>Bolões criados</span>
             </div>
           </div>
@@ -71,7 +107,7 @@ export default function Home() {
               alt=''
             />
             <div className="flex flex-col">
-              <span className="font-bold text-2xl">+192.847</span>
+              <span className="font-bold text-2xl">+{props.guessCount}</span>
               <span>Palpites enviados</span>
             </div>
           </div>
@@ -88,13 +124,24 @@ export default function Home() {
   )
 }
 
-// export const getServerSideProps = async () => {
-//   const response = await fetch('https://api.github.com/users/wess223/repos')
-//   const repoList = await response.json()
+export const getServerSideProps = async () => {
+//ver como funciona e aplicar o getStaticProps, para evitar várias chamadas ao mesmo tempo.
 
-//   return {
-//     props: {
-//       list: repoList
-//     }
-//   }
-// }
+  const [
+    poolCountResponse,
+    guessCountResponse,
+    userCountResponse
+  ] = await Promise.all([
+    api.get('users/wess223/repos'),
+    api.get('users/wess223/repos'),
+    api.get('users/wess223/repos')
+  ])
+
+  return {
+    props: {
+      poolCount: poolCountResponse.data.length,
+      guessCount: guessCountResponse.data.length,
+      userCount: userCountResponse.data.length
+    }
+  }
+}
